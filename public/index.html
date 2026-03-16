@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Real-time global events radar — earthquakes, fires, weather, finance, ocean, space, air quality and more."/>
+  <meta name="theme-color" content="#020b12"/>
+  <title>GLOBAL EVENTS RADAR</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <div class="header-left">
+    <div class="radar-icon"></div>
+    <div>
+      <div class="app-title">GLOBAL RADAR</div>
+      <div class="app-subtitle">REAL-TIME PLANET MONITORING v3</div>
+    </div>
+  </div>
+  <div class="header-center">
+    <button class="layer-btn active" data-layer="quakes">⬡ SEISMIC</button>
+    <button class="layer-btn active" data-layer="fires">◈ FIRES</button>
+    <button class="layer-btn active" data-layer="weather">◎ WEATHER</button>
+    <button class="layer-btn" data-layer="ships">⬟ SHIPS</button>
+    <button class="layer-btn" data-layer="aircraft">▲ AIR</button>
+  </div>
+  <div class="header-right">
+    <div class="status-dot"></div>
+    <div id="clock">--:--:-- UTC</div>
+  </div>
+</div>
+
+<!-- ALERT BAR -->
+<div id="alert-bar">
+  <span class="ablink">⚠ ALERT</span>
+  <span id="alert-text">Major event detected</span>
+  <span id="alert-close">✕</span>
+</div>
+
+<div id="app">
+
+  <!-- LEFT PANEL: Disasters -->
+  <div id="left-panel">
+    <div class="section-header">
+      <span class="section-title" style="color:var(--red)">⬡ SEISMIC</span>
+      <span class="section-count" id="quake-count">LOADING...</span>
+    </div>
+    <div id="quake-list"><div class="loading-bar"></div><div class="empty-state">Fetching USGS...</div></div>
+
+    <div class="section-header" style="margin-top:3px">
+      <span class="section-title" style="color:var(--orange)">◈ WILDFIRES</span>
+      <span class="section-count" id="fire-count-label">LOADING...</span>
+    </div>
+    <div id="fire-list"><div class="loading-bar"></div><div class="empty-state">Fetching NASA EONET...</div></div>
+
+    <div class="section-header" style="margin-top:3px">
+      <span class="section-title" style="color:var(--yellow)">◎ WEATHER</span>
+      <span class="section-count" id="weather-count">NOAA/NWS</span>
+    </div>
+    <div id="weather-list"><div class="loading-bar"></div><div class="empty-state">Fetching NOAA...</div></div>
+
+    <div class="section-header" style="margin-top:3px">
+      <span class="section-title" style="color:var(--purple)">⬟ DISASTERS</span>
+      <span class="section-count">GDACS</span>
+    </div>
+    <div id="disaster-list"><div class="loading-bar"></div></div>
+  </div>
+
+  <!-- MAP -->
+  <div id="map-container">
+    <div id="map"></div>
+    <div id="map-overlay">
+      <div class="map-stat">
+        <span style="color:var(--red)">M</span>
+        <span class="map-stat-val" id="max-mag" style="color:var(--red)">--</span>
+        <span style="color:var(--muted)">MAX MAG</span>
+      </div>
+      <div class="map-stat">
+        <span style="color:var(--orange)">🔥</span>
+        <span class="map-stat-val" id="fire-count-map" style="color:var(--orange)">--</span>
+        <span style="color:var(--muted)">FIRES</span>
+      </div>
+      <div class="map-stat">
+        <span style="color:var(--accent)">✦</span>
+        <span class="map-stat-val" id="event-total" style="color:var(--accent)">--</span>
+        <span style="color:var(--muted)">TOTAL</span>
+      </div>
+    </div>
+    <div id="ticker-container">
+      <div class="ticker-label">LIVE FEED</div>
+      <div id="ticker-track"><div id="ticker-inner">Initializing feeds...</div></div>
+    </div>
+    <div id="stats-bar">
+      <div class="stat-item"><span class="stat-label">SRC:</span><span style="color:var(--green);font-weight:bold">USGS·NASA·NOAA·OSM·OpenSky·CoinGecko·OpenAQ·GBIF·NASA·SWPC</span></div>
+      <div class="stat-item"><span class="stat-label">SYNC:</span><span id="last-sync" style="color:var(--accent);font-weight:bold">--:--</span></div>
+      <div class="stat-item" style="margin-left:auto"><span style="color:var(--muted)">FREE DATA · NO API KEY</span></div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: Tabbed data categories -->
+  <div id="right-panel">
+    <div id="panel-tabs">
+      <div class="ptab active" data-tab="news">📰 NEWS</div>
+      <div class="ptab" data-tab="finance">💹 FIN</div>
+      <div class="ptab" data-tab="ocean">🌊 OCEAN</div>
+      <div class="ptab" data-tab="air">🌿 AIR</div>
+      <div class="ptab" data-tab="space">🛸 SPACE</div>
+      <div class="ptab" data-tab="bio">🦎 BIO</div>
+    </div>
+    <div id="panel-content">
+
+      <!-- NEWS TAB -->
+      <div class="tab-pane active" id="tab-news">
+        <div class="section-header">
+          <span class="section-title" style="color:var(--accent)">◉ GLOBAL NEWS</span>
+          <button class="refresh-btn" id="news-refresh-btn">↺ NOW</button>
+        </div>
+        <div class="news-countdown">
+          <span>AUTO REFRESH</span>
+          <span id="news-timer">60s</span>
+        </div>
+        <div class="countdown-bar-wrap"><div id="news-countdown-bar" style="width:100%"></div></div>
+        <div id="news-list"><div class="loading-bar"></div><div class="empty-state">Fetching news...</div></div>
+      </div>
+
+      <!-- FINANCE TAB -->
+      <div class="tab-pane" id="tab-finance">
+        <div class="section-header">
+          <span class="section-title" style="color:var(--green)">💹 MARKETS &amp; CRYPTO</span>
+          <span class="section-count">LIVE</span>
+        </div>
+        <div id="finance-list"><div class="loading-bar"></div><div class="empty-state">Fetching CoinGecko...</div></div>
+        <div class="section-header" style="margin-top:3px">
+          <span class="section-title" style="color:var(--teal)">📈 INDICES</span>
+          <span class="section-count">STATIC</span>
+        </div>
+        <div id="indices-list"></div>
+      </div>
+
+      <!-- OCEAN TAB -->
+      <div class="tab-pane" id="tab-ocean">
+        <div class="section-header">
+          <span class="section-title" style="color:#38bdf8">🌊 OCEAN &amp; SEA</span>
+          <span class="section-count">MULTI-SRC</span>
+        </div>
+        <div id="ocean-list"><div class="loading-bar"></div><div class="empty-state">Fetching ocean data...</div></div>
+      </div>
+
+      <!-- AIR QUALITY TAB -->
+      <div class="tab-pane" id="tab-air">
+        <div class="section-header">
+          <span class="section-title" style="color:var(--green)">🌿 AIR QUALITY</span>
+          <span class="section-count">OpenAQ</span>
+        </div>
+        <div id="air-list"><div class="loading-bar"></div><div class="empty-state">Fetching OpenAQ...</div></div>
+      </div>
+
+      <!-- SPACE TAB -->
+      <div class="tab-pane" id="tab-space">
+        <div class="section-header">
+          <span class="section-title" style="color:#fde68a">🛸 SPACE &amp; ASTRONOMY</span>
+          <span class="section-count">NASA·SWPC</span>
+        </div>
+        <div id="space-list"><div class="loading-bar"></div></div>
+        <div class="section-header" style="margin-top:3px">
+          <span class="section-title" style="color:var(--purple)">☄ NEAR EARTH OBJECTS</span>
+          <span class="section-count">NASA NEO</span>
+        </div>
+        <div id="neo-list"><div class="loading-bar"></div></div>
+        <div class="section-header" style="margin-top:3px">
+          <span class="section-title" style="color:var(--teal)">🛰 ISS LOCATION</span>
+          <span class="section-count">LIVE</span>
+        </div>
+        <div id="iss-data"><div class="loading-bar"></div></div>
+      </div>
+
+      <!-- BIODIVERSITY TAB -->
+      <div class="tab-pane" id="tab-bio">
+        <div class="section-header">
+          <span class="section-title" style="color:var(--teal)">🦎 BIODIVERSITY</span>
+          <span class="section-count">GBIF·iNat</span>
+        </div>
+        <div id="bio-list"><div class="loading-bar"></div><div class="empty-state">Fetching GBIF...</div></div>
+        <div class="section-header" style="margin-top:3px">
+          <span class="section-title" style="color:var(--green)">🐦 WILDLIFE ALERTS</span>
+          <span class="section-count">eBird</span>
+        </div>
+        <div id="wildlife-list"><div class="loading-bar"></div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
