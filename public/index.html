@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Real-time global events monitoring — earthquakes, wildfires, weather, aviation, maritime and news." />
+  <meta name="theme-color" content="#020b12" />
+  <meta property="og:title" content="Global Events Radar" />
+  <meta property="og:description" content="Real-time planet monitoring dashboard using free open APIs." />
+  <title>GLOBAL EVENTS RADAR</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="header">
+    <div class="header-left">
+      <div class="radar-icon"></div>
+      <div>
+        <div class="app-title">GLOBAL RADAR</div>
+        <div class="app-subtitle">REAL-TIME PLANET MONITORING SYSTEM</div>
+      </div>
+    </div>
+    <div class="header-center">
+      <button class="layer-btn active" data-layer="quakes">⬡ SEISMIC</button>
+      <button class="layer-btn active" data-layer="fires">◈ FIRES</button>
+      <button class="layer-btn active" data-layer="weather">◎ WEATHER</button>
+      <button class="layer-btn active" data-layer="news">◉ NEWS</button>
+      <button class="layer-btn" data-layer="ships">⬟ MARITIME</button>
+      <button class="layer-btn" data-layer="aircraft">▲ AVIATION</button>
+    </div>
+    <div class="header-right">
+      <div class="status-dot"></div>
+      <div id="clock">--:--:-- UTC</div>
+    </div>
+  </div>
+
+  <div id="alert-bar">
+    <span class="ablink">⚠ ALERT</span>
+    <span id="alert-text">Major event detected</span>
+    <span id="alert-close">✕</span>
+  </div>
+
+  <div id="app">
+    <div id="left-panel">
+      <div class="section-header">
+        <span class="section-title" style="color:var(--accent2)">⬡ SEISMIC EVENTS</span>
+        <span class="section-count" id="quake-count">LOADING...</span>
+      </div>
+      <div id="quake-list"><div class="loading-bar"></div><div class="empty-state">Fetching USGS data...</div></div>
+
+      <div class="section-header" style="margin-top:4px">
+        <span class="section-title" style="color:var(--accent5)">◈ ACTIVE WILDFIRES</span>
+        <span class="section-count" id="fire-count-label">LOADING...</span>
+      </div>
+      <div id="fire-list"><div class="loading-bar"></div><div class="empty-state">Fetching NASA EONET...</div></div>
+
+      <div class="section-header" style="margin-top:4px">
+        <span class="section-title" style="color:#fde68a">◎ SPACE WEATHER</span>
+        <span class="section-count">NOAA SWPC</span>
+      </div>
+      <div id="space-list"><div class="loading-bar"></div></div>
+    </div>
+
+    <div id="map-container">
+      <div id="map"></div>
+      <div id="map-overlay">
+        <div class="map-stat">
+          <span style="color:var(--accent2)">M</span>
+          <span class="map-stat-val" id="max-mag" style="color:var(--accent2)">--</span>
+          <span style="color:var(--muted)">MAX MAG</span>
+        </div>
+        <div class="map-stat">
+          <span style="color:var(--accent5)">🔥</span>
+          <span class="map-stat-val" id="fire-count-map" style="color:var(--accent5)">--</span>
+          <span style="color:var(--muted)">FIRES</span>
+        </div>
+        <div class="map-stat">
+          <span style="color:var(--accent)">✦</span>
+          <span class="map-stat-val" id="event-total" style="color:var(--accent)">--</span>
+          <span style="color:var(--muted)">TOTAL</span>
+        </div>
+      </div>
+      <div id="ticker-container">
+        <div class="ticker-label">LIVE FEED</div>
+        <div id="ticker-track"><div id="ticker-inner">Initializing...</div></div>
+      </div>
+      <div id="stats-bar">
+        <div class="stat-item"><span class="stat-label">SRC:</span><span style="font-weight:bold;color:var(--accent4)">USGS · NASA EONET · NOAA NWS · NOAA SWPC · BBC RSS</span></div>
+        <div class="stat-item"><span class="stat-label">LAST SYNC:</span><span id="last-sync" style="font-weight:bold;color:var(--accent)">--:--</span></div>
+        <div class="stat-item" style="margin-left:auto"><span style="font-size:9px;color:var(--muted)">FREE OPEN DATA · NO API KEY REQUIRED</span></div>
+      </div>
+    </div>
+
+    <div id="right-panel">
+      <div class="section-header">
+        <span class="section-title" style="color:var(--accent)">◉ GLOBAL NEWS</span>
+        <button class="refresh-btn" id="news-refresh-btn">↺ REFRESH</button>
+      </div>
+      <div id="news-list"><div class="loading-bar"></div><div class="empty-state">Fetching news feeds...</div></div>
+
+      <div class="section-header" style="margin-top:4px">
+        <span class="section-title" style="color:var(--accent3)">◎ WEATHER ALERTS</span>
+        <span class="section-count" id="weather-count">NOAA/NWS</span>
+      </div>
+      <div id="weather-list"><div class="loading-bar"></div><div class="empty-state">Fetching NOAA alerts...</div></div>
+
+      <div class="section-header" style="margin-top:4px">
+        <span class="section-title" style="color:#a78bfa">⬟ DISASTER WATCH</span>
+        <span class="section-count">MULTI-SOURCE</span>
+      </div>
+      <div id="disaster-list"><div class="loading-bar"></div></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
