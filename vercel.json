@@ -1,5 +1,0 @@
-{
-  "version": 2,
-  "outputDirectory": "public",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
-}
