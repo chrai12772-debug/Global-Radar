@@ -1,0 +1,18 @@
+{
+  "name": "global-events-radar",
+  "version": "4.0.0",
+  "description": "Real-time global monitoring — live flights, ships, earthquakes, fires, weather and more",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-fetch": "^2.7.0",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
